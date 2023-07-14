@@ -7,7 +7,8 @@ import './App.css';
  * State declaration for <App />
  */
 interface IState {
-  data: ServerRespond[],
+  data: ServerRespond[], // It represents the data received from the server and is used to pass data down to the child component, <Graph />
+  showGraph: boolean, // This property is a boolean value that determines whether the graph should be displayed or not.
 }
 
 /**
@@ -22,6 +23,7 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false, //Initialize showGraph to false in the constructor
     };
   }
 
@@ -29,18 +31,28 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    if(this.state.showGraph){
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0 // Keeps a track of the number of times data is recieved from the server
+    const interval = setInterval(() => { // A constant interval is declared using setInterval(). This function executes a callback function with a fixed time delay
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        this.setState({ 
+          data: serverResponds,
+          showGraph: true,
+        });
+      });
+      x++;
+      if(x>1000){
+        clearInterval(interval); // This prevents continuous fetching of data from the server after 1000 iterations
+      }
+    },100); // In this case, the callback function is called every 100 ms
   }
 
   /**
